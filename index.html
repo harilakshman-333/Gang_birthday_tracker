@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🎂 Birthday Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a33;
+    --accent: #f0c040;
+    --accent2: #ff6b6b;
+    --accent3: #7ecfff;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --soon: #ff9f43;
+    --radius: 14px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  header {
+    padding: 48px 32px 32px;
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .header-title h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--text);
+  }
+  .header-title h1 span { color: var(--accent); }
+  .header-title p {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-weight: 300;
+  }
+
+  .add-btn {
+    background: var(--accent);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  .add-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(240,192,64,0.35); }
+  .add-btn:active { transform: translateY(0); }
+
+  .search-wrap {
+    max-width: 860px;
+    margin: 0 auto 28px;
+    padding: 0 32px;
+  }
+  .search-wrap input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--muted); }
+
+  .upcoming-banner {
+    max-width: 860px;
+    margin: 0 auto 32px;
+    padding: 0 32px;
+  }
+  .upcoming-inner {
+    background: linear-gradient(135deg, #1e1a0a 0%, #1a1a0d 100%);
+    border: 1px solid #3a3010;
+    border-radius: var(--radius);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .upcoming-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .upcoming-list { display: flex; gap: 12px; flex-wrap: wrap; }
+  .upcoming-chip {
+    background: rgba(240,192,64,0.12);
+    border: 1px solid rgba(240,192,64,0.25);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+  .upcoming-chip .days { font-weight: 700; }
+
+  .grid {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--border));
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .card:hover { transform: translateY(-3px); border-color: #3a3a48; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  .card.soon { --card-accent: var(--soon); border-color: rgba(255,159,67,0.25); }
+  .card.today { --card-accent: var(--accent2); border-color: rgba(255,107,107,0.4); animation: pulse-border 2s infinite; }
+  @keyframes pulse-border {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,107,107,0); }
+    50% { box-shadow: 0 0 0 6px rgba(255,107,107,0.15); }
+  }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+  .avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface2);
+    flex-shrink: 0;
+  }
+  .card-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 5px 7px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    line-height: 1;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--text); background: var(--surface2); }
+  .icon-btn.del:hover { color: var(--accent2); border-color: var(--accent2); }
+
+  .card-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; margin-bottom: 4px; }
+  .card-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tag { font-size: 0.75rem; padding: 3px 9px; border-radius: 5px; font-weight: 500; }
+  .tag-country { background: rgba(126,207,255,0.1); color: var(--accent3); }
+  .tag-bday { background: var(--surface2); color: var(--muted); }
+
+  .countdown {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--muted);
+    display: inline-block;
+  }
+  .countdown.today { background: rgba(255,107,107,0.15); color: var(--accent2); }
+  .countdown.soon-chip { background: rgba(255,159,67,0.12); color: var(--soon); }
+  .countdown.next-month { background: rgba(126,207,255,0.08); color: var(--accent3); }
+
+  .empty { max-width: 860px; margin: 40px auto; padding: 0 32px; text-align: center; color: var(--muted); }
+  .empty .big { font-size: 3rem; margin-bottom: 12px; }
+
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 20px;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px;
+    width: 100%;
+    max-width: 420px;
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; margin-bottom: 24px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+  .field input, .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+
+  .emoji-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .emoji-opt {
+    width: 38px; height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface2);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .emoji-opt:hover { border-color: var(--accent); transform: scale(1.1); }
+  .emoji-opt.selected { border-color: var(--accent); background: rgba(240,192,64,0.1); }
+
+  .modal-btns { display: flex; gap: 10px; margin-top: 26px; }
+  .btn-cancel {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px;
+    padding: 11px; color: var(--muted); font-family: 'Syne', sans-serif; font-weight: 600; cursor: pointer;
+  }
+  .btn-save {
+    flex: 2; background: var(--accent); border: none; border-radius: 9px;
+    padding: 11px; color: #0d0d0f; font-family: 'Syne', sans-serif; font-weight: 800; cursor: pointer;
+  }
+
+  .sort-bar { max-width: 860px; margin: 0 auto 16px; padding: 0 32px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sort-label { font-size: 0.78rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sort-btn {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+    padding: 5px 12px; font-size: 0.8rem; color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .sort-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(240,192,64,0.07); }
+
+  @media (max-width: 500px) {
+    header, .search-wrap, .upcoming-banner, .grid, .sort-bar { padding-left: 16px; padding-right: 16px; }
+    header { padding-top: 28px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <h1>Birthday<span>.</span></h1>
+    <p>Never forget a friend's special day</p>
+  </div>
+  <button class="add-btn" onclick="openModal()">+ Add Friend</button>
+</header>
+
+<div class="search-wrap">
+  <input type="text" id="searchInput" placeholder="Search friends or countries…" oninput="render()" />
+</div>
+
+<div class="upcoming-banner" id="upcomingBanner"></div>
+
+<div class="sort-bar">
+  <span class="sort-label">Sort:</span>
+  <button class="sort-btn active" data-sort="countdown" onclick="setSort(this)">Upcoming</button>
+  <button class="sort-btn" data-sort="name" onclick="setSort(this)">Name</button>
+  <button class="sort-btn" data-sort="country" onclick="setSort(this)">Country</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="overlay" id="overlay" style="display:none" onclick="overlayClick(event)">
+  <div class="modal">
+    <h2 id="modalTitle">Add Friend 🎉</h2>
+    <div class="field"><label>Name</label><input type="text" id="fName" placeholder="e.g. Priya Sharma" /></div>
+    <div class="field"><label>Birthday</label><input type="date" id="fBday" /></div>
+    <div class="field"><label>Country</label><input type="text" id="fCountry" placeholder="e.g. India, UK, USA…" /></div>
+    <div class="field"><label>Avatar</label><div class="emoji-row" id="emojiRow"></div></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveFriend()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const EMOJIS = ['🧑','👩','👨','🧔','👩‍🦱','🧑‍🦰','👩‍🦳','🧑‍🦲','🧕','🧑‍🎤','🧑‍💻','🧑‍🎨','🧙','🦸','🧝','🐱','🦊','🐼'];
+const STORAGE_KEY = 'birthday_friends_v2';
+
+const DEFAULT_FRIENDS = [
+  { id: 'd1',  name: 'Anu',      bday: { month: 5,  day: 4,  year: 1998 }, country: 'Ireland', avatar: '🧕' },
+  { id: 'd2',  name: 'Chithesh', bday: { month: 5,  day: 5,  year: 1997 }, country: 'India',   avatar: '🧑' },
+  { id: 'd3',  name: 'Rithika',  bday: { month: 6,  day: 6,  year: 2000 }, country: 'India',   avatar: '👩' },
+  { id: 'd4',  name: 'Sanjana',  bday: { month: 6,  day: 16, year: 2000 }, country: 'India',   avatar: '🧕' },
+  { id: 'd5',  name: 'Ramu',     bday: { month: 8,  day: 29, year: 1997 }, country: 'India',   avatar: '🧔' },
+  { id: 'd6',  name: 'Lachu',    bday: { month: 8,  day: 29, year: 1997 }, country: 'India',   avatar: '🧑' },
+  { id: 'd7',  name: 'Sudu',     bday: { month: 9,  day: 7,  year: 1997 }, country: 'India',   avatar: '🧑' },
+  { id: 'd8',  name: 'Ram bro',  bday: { month: 11, day: 2,  year: 1994 }, country: 'India',   avatar: '🧑' },
+  { id: 'd9',  name: 'Giri',     bday: { month: 12, day: 23, year: 1998 }, country: 'India',   avatar: '🧑' },
+  { id: 'd10', name: 'Ruthvik',  bday: { month: 2,  day: 25, year: 2000 }, country: 'India',   avatar: '🧑' },
+  { id: 'd11', name: 'Nisha',    bday: { month: 3,  day: 18, year: 1998 }, country: 'India',   avatar: '🧕' },
+];
+
+// Load from localStorage, seeded with default friends if first visit
+let stored = localStorage.getItem(STORAGE_KEY);
+let friends;
+if (stored) {
+  friends = JSON.parse(stored);
+  // Merge in any default friends not already present
+  DEFAULT_FRIENDS.forEach(df => {
+    if (!friends.find(f => f.id === df.id)) friends.unshift(df);
+  });
+} else {
+  friends = [...DEFAULT_FRIENDS];
+}
+save();
+
+let editId = null;
+let sortMode = 'countdown';
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(friends)); }
+
+function daysUntil(bday) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const next = new Date(now.getFullYear(), bday.month - 1, bday.day);
+  if (next < today) next.setFullYear(now.getFullYear() + 1);
+  return Math.round((next - today) / 86400000);
+}
+
+function formatBday(bday) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[bday.month - 1]} ${bday.day}${bday.year ? ', ' + bday.year : ''}`;
+}
+
+function countdownLabel(days) {
+  if (days === 0) return { text: '🎂 Today!', cls: 'today' };
+  if (days === 1) return { text: '⚡ Tomorrow', cls: 'soon-chip' };
+  if (days <= 7) return { text: `🔥 ${days} days`, cls: 'soon-chip' };
+  if (days <= 30) return { text: `${days} days`, cls: 'next-month' };
+  return { text: `${days} days`, cls: '' };
+}
+
+function cardClass(days) {
+  if (days === 0) return 'today';
+  if (days <= 7) return 'soon';
+  return '';
+}
+
+function getSorted(list) {
+  if (sortMode === 'name') return [...list].sort((a, b) => a.name.localeCompare(b.name));
+  if (sortMode === 'country') return [...list].sort((a, b) => a.country.localeCompare(b.country));
+  return [...list].sort((a, b) => daysUntil(a.bday) - daysUntil(b.bday));
+}
+
+function render() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let list = friends.filter(f => f.name.toLowerCase().includes(q) || f.country.toLowerCase().includes(q));
+  const sorted = getSorted(list);
+
+  const upcoming = friends.filter(f => daysUntil(f.bday) <= 14).sort((a, b) => daysUntil(a.bday) - daysUntil(b.bday));
+  const banner = document.getElementById('upcomingBanner');
+  if (upcoming.length) {
+    banner.innerHTML = `<div class="upcoming-inner">
+      <span class="upcoming-label">🎉 Coming up</span>
+      <div class="upcoming-list">${upcoming.map(f => {
+        const d = daysUntil(f.bday);
+        return `<span class="upcoming-chip">${f.avatar} ${f.name} <span class="days">${d === 0 ? 'today' : d === 1 ? 'tmrw' : 'in ' + d + 'd'}</span></span>`;
+      }).join('')}</div></div>`;
+  } else { banner.innerHTML = ''; }
+
+  const grid = document.getElementById('grid');
+  if (!sorted.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 0">No results</div>`;
+    return;
+  }
+
+  grid.innerHTML = sorted.map(f => {
+    const days = daysUntil(f.bday);
+    const cd = countdownLabel(days);
+    return `<div class="card ${cardClass(days)}">
+      <div class="card-top">
+        <div class="avatar">${f.avatar}</div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="openModal('${f.id}')">✏️</button>
+          <button class="icon-btn del" onclick="deleteFriend('${f.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="card-name">${f.name}</div>
+      <div class="card-meta">
+        <span class="tag tag-country">🌍 ${f.country}</span>
+        <span class="tag tag-bday">${formatBday(f.bday)}</span>
+      </div>
+      <span class="countdown ${cd.cls}">${cd.text}</span>
+    </div>`;
+  }).join('');
+}
+
+function buildEmojiRow(selected) {
+  document.getElementById('emojiRow').innerHTML = EMOJIS.map(e =>
+    `<div class="emoji-opt${e === selected ? ' selected' : ''}" onclick="selectEmoji(this)">${e}</div>`
+  ).join('');
+}
+
+function selectEmoji(el) {
+  document.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function getSelectedEmoji() {
+  const sel = document.querySelector('.emoji-opt.selected');
+  return sel ? sel.textContent : '🧑';
+}
+
+function openModal(id = null) {
+  editId = id;
+  const f = id ? friends.find(x => x.id === id) : null;
+  document.getElementById('modalTitle').textContent = id ? 'Edit Friend ✏️' : 'Add Friend 🎉';
+  document.getElementById('fName').value = f ? f.name : '';
+  document.getElementById('fCountry').value = f ? f.country : '';
+  if (f) {
+    const y = f.bday.year || new Date().getFullYear();
+    document.getElementById('fBday').value = `${y}-${String(f.bday.month).padStart(2,'0')}-${String(f.bday.day).padStart(2,'0')}`;
+  } else { document.getElementById('fBday').value = ''; }
+  buildEmojiRow(f ? f.avatar : '🧑');
+  document.getElementById('overlay').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('overlay').style.display = 'none'; editId = null; }
+function overlayClick(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+
+function saveFriend() {
+  const name = document.getElementById('fName').value.trim();
+  const bdayRaw = document.getElementById('fBday').value;
+  const country = document.getElementById('fCountry').value.trim();
+  if (!name || !bdayRaw || !country) { alert('Please fill in all fields.'); return; }
+  const [yr, mo, dy] = bdayRaw.split('-').map(Number);
+  const bday = { year: yr, month: mo, day: dy };
+  const avatar = getSelectedEmoji();
+  if (editId) {
+    const i = friends.findIndex(f => f.id === editId);
+    friends[i] = { ...friends[i], name, bday, country, avatar };
+  } else {
+    friends.push({ id: Date.now().toString(), name, bday, country, avatar });
+  }
+  save(); closeModal(); render();
+}
+
+function deleteFriend(id) {
+  if (!confirm('Remove this friend?')) return;
+  friends = friends.filter(f => f.id !== id);
+  save(); render();
+}
+
+function setSort(btn) {
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  sortMode = btn.dataset.sort;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
